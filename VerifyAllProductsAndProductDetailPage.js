@@ -1,55 +1,58 @@
 const { chromium } = require('playwright');
+const HomePage = require('./pages/HomePage');
+const ProductsPage = require('./pages/ProductsPage');
+const ProductDetailPage = require('./pages/ProductDetailPage');
+const logger = require('./utils/logger');
 
 (async () => {
+    logger.info('Starting Test Case 8: Verify All Products and product detail page');
     const browser = await chromium.launch({ headless: false });
     const context = await browser.newContext();
     const page = await context.newPage();
 
+    const homePage = new HomePage(page);
+    const productsPage = new ProductsPage(page);
+    const productDetailPage = new ProductDetailPage(page);
+
     try {
-        // Step 1: Navigate to URL
-        await page.goto('http://automationexercise.com');
+        // 1. Launch browser
+        logger.info('Step 1: Browser launched successfully');
 
-        // Step 2: Verify that home page is visible successfully
-        await page.waitForSelector('title');
-        const title = await page.title();
-        if (!title.includes('Automation Exercise')) {
-            throw new Error('Home page not visible successfully');
-        }
+        // 2. Navigate to url 'http://automationexercise.com'
+        logger.info('Step 2: Navigating to automationexercise.com');
+        await homePage.navigate();
 
-        // Step 3: Click on 'Products' button
-        await page.click('text=Products');
+        // 3. Verify that home page is visible successfully
+        logger.info('Step 3: Verifying home page visibility');
+        await homePage.verifyHomePageVisible();
 
-        // Step 4: Verify user is navigated to ALL PRODUCTS page successfully
-        await page.waitForSelector('text=All Products');
+        // 4. Click on 'Products' button
+        logger.info('Step 4: Clicking Products button');
+        await productsPage.clickProductsButton();
 
-        // Step 5: Verify the products list is visible
-        await page.waitForSelector('.features_items');
+        // 5. Verify user is navigated to ALL PRODUCTS page successfully
+        logger.info('Step 5: Verifying ALL PRODUCTS page');
+        await productsPage.verifyAllProductsPage();
 
-        // Step 6: Click on 'View Product' of first product
-        await page.click('.features_items .productinfo img');
+        // 6. The products list is visible
+        logger.info('Step 6: Verifying products list visibility');
+        await productsPage.verifyProductsListVisible();
 
-        // Step 7: User is landed to product detail page
-        await page.waitForSelector('.product-information');
+        // 7. Click on 'View Product' of first product
+        logger.info('Step 7: Clicking View Product of first product');
+        await productsPage.clickViewProductOfFirstProduct();
 
-        // Step 8: Verify that product details are visible
-        const productName = await page.textContent('.product-information h2');
-        const category = await page.textContent('.product-information p:nth-of-type(1)');
-        const price = await page.textContent('.product-information span');
-        const availability = await page.textContent('.product-information p:nth-of-type(2)');
-        const condition = await page.textContent('.product-information p:nth-of-type(3)');
-        const brand = await page.textContent('.product-information p:nth-of-type(4)');
+        // 8. User is landed to product detail page
+        // 9. Verify that detail detail is visible: product name, category, price, availability, condition, brand
+        logger.info('Steps 8-9: Verifying product detail page');
+        await productDetailPage.verifyProductDetailPage();
 
-        console.log('Product Details:');
-        console.log('Name:', productName);
-        console.log('Category:', category);
-        console.log('Price:', price);
-        console.log('Availability:', availability);
-        console.log('Condition:', condition);
-        console.log('Brand:', brand);
-
+        logger.info('Test Case 8: Verify All Products and product detail page - PASSED');
     } catch (error) {
-        console.error('Test failed:', error);
+        logger.error('Test Case 8: Verify All Products and product detail page - FAILED');
+        logger.error(`Error details: ${error.message}`);
     } finally {
+        logger.info('Cleaning up: Closing browser');
         await browser.close();
     }
-})();
+})(); 

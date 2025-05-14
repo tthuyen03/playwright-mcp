@@ -1,46 +1,55 @@
 const { chromium } = require('playwright');
+const HomePage = require('./pages/HomePage');
+const LoginPage = require('./pages/LoginPage');
+const logger = require('./utils/logger');
 
 (async () => {
+    logger.info('Starting Test Case 3: Login User with incorrect email and password');
     const browser = await chromium.launch({ headless: false });
     const context = await browser.newContext();
     const page = await context.newPage();
 
+    const homePage = new HomePage(page);
+    const loginPage = new LoginPage(page);
+
     try {
-        // Step 1: Navigate to URL
-        await page.goto('http://automationexercise.com');
+        // 1. Launch browser
+        logger.info('Step 1: Browser launched successfully');
 
-        // Step 2: Verify that home page is visible successfully
-        await page.waitForSelector('title');
-        const title = await page.title();
-        if (!title.includes('Automation Exercise')) {
-            throw new Error('Home page not visible successfully');
-        }
+        // 2. Navigate to url 'http://automationexercise.com'
+        logger.info('Step 2: Navigating to automationexercise.com');
+        await homePage.navigate();
 
-        // Step 3: Click on 'Signup / Login' button
-        await page.click('text=Signup / Login');
+        // 3. Verify that home page is visible successfully
+        logger.info('Step 3: Verifying home page visibility');
+        await homePage.verifyHomePageVisible();
 
-        // Step 4: Verify 'Login to your account' is visible
-        await page.waitForSelector('text=Login to your account');
+        // 4. Click on 'Signup / Login' button
+        logger.info('Step 4: Clicking Signup/Login button');
+        await loginPage.clickSignupLogin();
 
-        // Step 5: Enter correct email address and password
-        await page.fill('input[name="email"]', 'testuser@example.com');
-        await page.fill('input[name="password"]', 'password123');
+        // 5. Verify 'Login to your account' is visible
+        logger.info('Step 5: Verifying login page visibility');
+        await loginPage.verifyLoginPageVisible();
 
-        // Step 6: Click 'login' button
-        await page.click('button:has-text("Login")');
+        // 6. Enter incorrect email address and password
+        logger.info('Step 6: Entering incorrect login details');
+        await loginPage.fillLoginDetails('invalid@email.com', 'wrongpassword');
 
-        // Step 7: Verify that 'Logged in as username' is visible
-        await page.waitForSelector('text=Logged in as');
+        // 7. Click 'login' button
+        logger.info('Step 7: Clicking login button');
+        await loginPage.clickLoginButton();
 
-        // Step 8: Click 'Delete Account' button
-        await page.click('text=Delete Account');
+        // 8. Verify error 'Your email or password is incorrect!' is visible
+        logger.info('Step 8: Verifying login error message');
+        await loginPage.verifyLoginError();
 
-        // Step 9: Verify that 'ACCOUNT DELETED!' is visible
-        await page.waitForSelector('text=Account Deleted!');
-
+        logger.info('Test Case 3: Login User with incorrect email and password - PASSED');
     } catch (error) {
-        console.error('Test failed:', error);
+        logger.error('Test Case 3: Login User with incorrect email and password - FAILED');
+        logger.error(`Error details: ${error.message}`);
     } finally {
+        logger.info('Cleaning up: Closing browser');
         await browser.close();
     }
 })();

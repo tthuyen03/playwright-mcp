@@ -1,6 +1,9 @@
 {
   "dependencies": {
-    "@playwright/test": "^1.52.0",
-    "playwright": "^1.52.0"
+    "playwright": "^1.52.0",
+    "winston": "^3.17.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.52.0"
   }
 }

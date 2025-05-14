@@ -1,111 +1,144 @@
 const { chromium } = require('playwright');
+const HomePage = require('./pages/HomePage');
+const ProductsPage = require('./pages/ProductsPage');
+const CartPage = require('./pages/CartPage');
+const CheckoutPage = require('./pages/CheckoutPage');
+const SignupPage = require('./pages/SignupPage');
+const logger = require('./utils/logger');
 
 (async () => {
+    logger.info('Starting Test Case 24: Download Invoice after purchase order');
     const browser = await chromium.launch({ headless: false });
     const context = await browser.newContext();
     const page = await context.newPage();
 
+    const homePage = new HomePage(page);
+    const productsPage = new ProductsPage(page);
+    const cartPage = new CartPage(page);
+    const checkoutPage = new CheckoutPage(page);
+    const signupPage = new SignupPage(page);
+
     try {
-        // Step 1: Navigate to URL
-        await page.goto('http://automationexercise.com');
+        // 1. Launch browser
+        logger.info('Step 1: Browser launched successfully');
 
-        // Step 2: Verify that home page is visible successfully
-        await page.waitForSelector('title');
-        const title = await page.title();
-        if (!title.includes('Automation Exercise')) {
-            throw new Error('Home page not visible successfully');
-        }
+        // 2. Navigate to url 'http://automationexercise.com'
+        logger.info('Step 2: Navigating to automationexercise.com');
+        await homePage.navigate();
 
-        // Step 3: Add products to cart
-        await page.click('text=Add to cart', { timeout: 5000 });
-        await page.click('text=Continue Shopping');
+        // 3. Verify that home page is visible successfully
+        logger.info('Step 3: Verifying home page visibility');
+        await homePage.verifyHomePageVisible();
 
-        // Step 4: Click 'Cart' button
-        await page.click('text=Cart');
+        // 4. Add products to cart
+        logger.info('Step 4: Adding products to cart');
+        await productsPage.clickProductsButton();
+        await productsPage.hoverAndAddToCart(productsPage.firstProduct);
+        await productsPage.clickContinueShopping();
+        await productsPage.hoverAndAddToCart(productsPage.secondProduct);
 
-        // Step 5: Verify that cart page is displayed
-        await page.waitForSelector('text=Shopping Cart');
+        // 5. Click 'Cart' button
+        logger.info('Step 5: Clicking Cart button');
+        await cartPage.clickCartButton();
 
-        // Step 6: Click Proceed To Checkout
-        await page.click('text=Proceed To Checkout');
+        // 6. Verify that cart page is displayed
+        logger.info('Step 6: Verifying cart page display');
+        await cartPage.verifyCartPageDisplayed();
 
-        // Step 7: Click 'Register / Login' button
-        await page.click('text=Register / Login');
+        // 7. Click Proceed To Checkout
+        logger.info('Step 7: Clicking Proceed To Checkout');
+        await checkoutPage.clickProceedToCheckout();
 
-        // Step 8: Fill all details in Signup and create account
-        await page.fill('input[name="name"]', 'Test User');
-        await page.fill('input[name="email"]', 'testuser@example.com');
-        await page.click('button:has-text("Signup")');
-        await page.check('#id_gender1');
-        await page.fill('#password', 'password123');
-        await page.selectOption('#days', '1');
-        await page.selectOption('#months', '1');
-        await page.selectOption('#years', '2000');
-        await page.check('#newsletter');
-        await page.check('#optin');
-        await page.fill('#first_name', 'Test');
-        await page.fill('#last_name', 'User');
-        await page.fill('#company', 'Test Company');
-        await page.fill('#address1', '123 Test Street');
-        await page.fill('#address2', 'Suite 456');
-        await page.selectOption('#country', 'United States');
-        await page.fill('#state', 'California');
-        await page.fill('#city', 'Los Angeles');
-        await page.fill('#zipcode', '90001');
-        await page.fill('#mobile_number', '1234567890');
-        await page.click('button:has-text("Create Account")');
+        // 8. Click 'Register / Login' button
+        logger.info('Step 8: Clicking Register/Login button');
+        await checkoutPage.clickRegisterLogin();
 
-        // Step 9: Verify 'ACCOUNT CREATED!' and click 'Continue' button
-        await page.waitForSelector('text=Account Created!');
-        await page.click('text=Continue');
+        // 9. Fill all details in Signup and create account
+        logger.info('Step 9: Filling signup details');
+        const userDetails = {
+            name: 'Test User',
+            email: `test${Date.now()}@example.com`,
+            password: 'Test@123',
+            firstName: 'Test',
+            lastName: 'User',
+            company: 'Test Company',
+            address1: '123 Test Street',
+            address2: 'Apt 4B',
+            country: 'United States',
+            state: 'California',
+            city: 'Los Angeles',
+            zipcode: '90001',
+            mobileNumber: '1234567890'
+        };
+        await signupPage.signup(userDetails);
 
-        // Step 10: Verify 'Logged in as username' at top
-        await page.waitForSelector('text=Logged in as');
+        // 10. Verify 'ACCOUNT CREATED!' and click 'Continue' button
+        logger.info('Step 10: Verifying account creation');
+        await signupPage.verifyAccountCreated();
 
-        // Step 11: Click 'Cart' button
-        await page.click('text=Cart');
+        // 11. Verify ' Logged in as username' at top
+        logger.info('Step 11: Verifying logged in status');
+        await homePage.verifyLoggedInAs(userDetails.name);
 
-        // Step 12: Click 'Proceed To Checkout' button
-        await page.click('text=Proceed To Checkout');
+        // 12. Click 'Cart' button
+        logger.info('Step 12: Clicking Cart button');
+        await cartPage.clickCartButton();
 
-        // Step 13: Verify Address Details and Review Your Order
-        await page.waitForSelector('text=Address Details');
-        await page.waitForSelector('text=Review Your Order');
+        // 13. Click 'Proceed To Checkout' button
+        logger.info('Step 13: Clicking Proceed To Checkout');
+        await checkoutPage.clickProceedToCheckout();
 
-        // Step 14: Enter description in comment text area and click 'Place Order'
-        await page.fill('textarea[name="message"]', 'Please deliver between 9 AM and 5 PM.');
-        await page.click('text=Place Order');
+        // 14. Verify Address Details and Review Your Order
+        logger.info('Step 14: Verifying address details and order review');
+        await checkoutPage.verifyAddressDetails();
+        await checkoutPage.verifyOrderReview();
 
-        // Step 15: Enter payment details
-        await page.fill('input[name="name_on_card"]', 'Test User');
-        await page.fill('input[name="card_number"]', '4111111111111111');
-        await page.fill('input[name="cvc"]', '123');
-        await page.fill('input[name="expiry_month"]', '12');
-        await page.fill('input[name="expiry_year"]', '2025');
+        // 15. Enter description in comment text area and click 'Place Order'
+        logger.info('Step 15: Entering comment and placing order');
+        await checkoutPage.enterComment('Please deliver in the morning');
+        await checkoutPage.clickPlaceOrder();
 
-        // Step 16: Click 'Pay and Confirm Order' button
-        await page.click('text=Pay and Confirm Order');
+        // 16. Enter payment details
+        logger.info('Step 16: Entering payment details');
+        const paymentDetails = {
+            nameOnCard: 'Test User',
+            cardNumber: '4111111111111111',
+            cvc: '123',
+            expiryMonth: '12',
+            expiryYear: '2025'
+        };
+        await checkoutPage.enterPaymentDetails(paymentDetails);
 
-        // Step 17: Verify success message 'Your order has been placed successfully!'
-        await page.waitForSelector('text=Your order has been placed successfully!');
+        // 17. Click 'Pay and Confirm Order' button
+        logger.info('Step 17: Clicking Pay and Confirm Order');
+        await checkoutPage.clickPayAndConfirm();
 
-        // Step 18: Click 'Download Invoice' button and verify invoice is downloaded successfully
-        await page.click('text=Download Invoice');
-        console.log('Invoice downloaded successfully.');
+        // 18. Verify success message
+        logger.info('Step 18: Verifying order success message');
+        await checkoutPage.verifyOrderSuccess();
 
-        // Step 19: Click 'Continue' button
-        await page.click('text=Continue');
+        // 19. Click 'Download Invoice' button and verify invoice is downloaded
+        logger.info('Step 19: Downloading invoice');
+        await checkoutPage.downloadInvoice();
 
-        // Step 20: Click 'Delete Account' button
-        await page.click('text=Delete Account');
+        // 20. Click 'Continue' button
+        logger.info('Step 20: Clicking Continue button');
+        await checkoutPage.clickContinue();
 
-        // Step 21: Verify 'ACCOUNT DELETED!' and click 'Continue' button
-        await page.waitForSelector('text=Account Deleted!');
-        await page.click('text=Continue');
+        // 21. Click 'Delete Account' button
+        logger.info('Step 21: Clicking Delete Account button');
+        await homePage.clickDeleteAccountButton();
 
+        // 22. Verify 'ACCOUNT DELETED!' and click 'Continue' button
+        logger.info('Step 22: Verifying account deletion');
+        await signupPage.verifyAccountDeleted();
+
+        logger.info('Test Case 24: Download Invoice after purchase order - PASSED');
     } catch (error) {
-        console.error('Test failed:', error);
+        logger.error('Test Case 24: Download Invoice after purchase order - FAILED');
+        logger.error(`Error details: ${error.message}`);
     } finally {
+        logger.info('Cleaning up: Closing browser');
         await browser.close();
     }
 })();

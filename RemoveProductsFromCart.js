@@ -1,44 +1,60 @@
 const { chromium } = require('playwright');
+const HomePage = require('./pages/HomePage');
+const ProductsPage = require('./pages/ProductsPage');
+const CartPage = require('./pages/CartPage');
+const logger = require('./utils/logger');
 
 (async () => {
+    logger.info('Starting Test Case 17: Remove Products From Cart');
     const browser = await chromium.launch({ headless: false });
     const context = await browser.newContext();
     const page = await context.newPage();
 
+    const homePage = new HomePage(page);
+    const productsPage = new ProductsPage(page);
+    const cartPage = new CartPage(page);
+
     try {
-        // Step 1: Navigate to URL
-        await page.goto('http://automationexercise.com');
+        // 1. Launch browser
+        logger.info('Step 1: Browser launched successfully');
 
-        // Step 2: Verify that home page is visible successfully
-        await page.waitForSelector('title');
-        const title = await page.title();
-        if (!title.includes('Automation Exercise')) {
-            throw new Error('Home page not visible successfully');
-        }
+        // 2. Navigate to url 'http://automationexercise.com'
+        logger.info('Step 2: Navigating to automationexercise.com');
+        await homePage.navigate();
 
-        // Step 3: Add products to cart
-        await page.click('text=Add to cart', { timeout: 5000 });
-        await page.click('text=Continue Shopping');
+        // 3. Verify that home page is visible successfully
+        logger.info('Step 3: Verifying home page visibility');
+        await homePage.verifyHomePageVisible();
 
-        // Step 4: Click 'Cart' button
-        await page.click('text=Cart');
+        // 4. Add products to cart
+        logger.info('Step 4: Adding products to cart');
+        await productsPage.clickProductsButton();
+        await productsPage.hoverAndAddToCart(productsPage.firstProduct);
+        await productsPage.clickContinueShopping();
+        await productsPage.hoverAndAddToCart(productsPage.secondProduct);
 
-        // Step 5: Verify that cart page is displayed
-        await page.waitForSelector('text=Shopping Cart');
+        // 5. Click 'Cart' button
+        logger.info('Step 5: Clicking Cart button');
+        await cartPage.clickCartButton();
 
-        // Step 6: Click 'X' button corresponding to a particular product
-        await page.click('.cart_quantity_delete');
+        // 6. Verify that cart page is displayed
+        logger.info('Step 6: Verifying cart page display');
+        await cartPage.verifyCartPageDisplayed();
 
-        // Step 7: Verify that product is removed from the cart
-        const cartItems = await page.$$('.cart_product');
-        if (cartItems.length > 0) {
-            throw new Error('Product was not removed from the cart');
-        }
-        console.log('Product successfully removed from the cart.');
+        // 7. Click 'X' button corresponding to particular product
+        logger.info('Step 7: Removing product from cart');
+        await cartPage.removeProductFromCart();
 
+        // 8. Verify that product is removed from the cart
+        logger.info('Step 8: Verifying product removal');
+        await cartPage.verifyProductRemoved();
+
+        logger.info('Test Case 17: Remove Products From Cart - PASSED');
     } catch (error) {
-        console.error('Test failed:', error);
+        logger.error('Test Case 17: Remove Products From Cart - FAILED');
+        logger.error(`Error details: ${error.message}`);
     } finally {
+        logger.info('Cleaning up: Closing browser');
         await browser.close();
     }
 })();

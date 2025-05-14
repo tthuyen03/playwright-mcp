@@ -1,44 +1,73 @@
 const { chromium } = require('playwright');
+const HomePage = require('./pages/HomePage');
+const ProductsPage = require('./pages/ProductsPage');
+const logger = require('./utils/logger');
 
 (async () => {
+    logger.info('Starting Test Case 9: Search Product');
     const browser = await chromium.launch({ headless: false });
     const context = await browser.newContext();
     const page = await context.newPage();
 
+    const homePage = new HomePage(page);
+    const productsPage = new ProductsPage(page);
+
     try {
-        // Step 1: Navigate to URL
-        await page.goto('http://automationexercise.com');
+        // 1. Launch browser
+        logger.info('Step 1: Browser launched successfully');
 
-        // Step 2: Verify that home page is visible successfully
-        await page.waitForSelector('title');
-        const title = await page.title();
-        if (!title.includes('Automation Exercise')) {
-            throw new Error('Home page not visible successfully');
-        }
+        // 2. Navigate to url 'http://automationexercise.com'
+        logger.info('Step 2: Navigating to automationexercise.com');
+        await homePage.navigate();
 
-        // Step 3: Click on 'Products' button
-        await page.click('text=Products');
+        // Wait for 2 seconds before proceeding
+        await page.waitForTimeout(2000);
 
-        // Step 4: Verify user is navigated to ALL PRODUCTS page successfully
-        await page.waitForSelector('text=All Products');
+        // 3. Verify that home page is visible successfully
+        logger.info('Step 3: Verifying home page visibility');
+        await homePage.verifyHomePageVisible();
 
-        // Step 5: Enter product name in search input and click search button
-        await page.fill('input[name="search"]', 'Dress');
-        await page.click('button:has-text("Search")');
+        // Wait for 1 second before proceeding
+        await page.waitForTimeout(1000);
 
-        // Step 6: Verify 'SEARCHED PRODUCTS' is visible
-        await page.waitForSelector('text=Searched Products');
+        // 4. Click on 'Products' button
+        logger.info('Step 4: Clicking on Products button');
+        await productsPage.clickProductsButton();
 
-        // Step 7: Verify all the products related to search are visible
-        const products = await page.$$('.features_items .productinfo');
-        if (products.length === 0) {
-            throw new Error('No products found for the search query');
-        }
-        console.log(`Found ${products.length} products related to the search.`);
+        // Wait for 1 second before proceeding
+        await page.waitForTimeout(1000);
 
+        // 5. Verify user is navigated to ALL PRODUCTS page successfully
+        logger.info('Step 5: Verifying navigation to ALL PRODUCTS page');
+        await productsPage.verifyAllProductsPage();
+
+        // Wait for 1 second before proceeding
+        await page.waitForTimeout(1000);
+
+        // 6. Enter product name in search input and click search button
+        logger.info('Step 6: Searching for product');
+        await productsPage.searchProduct('Blue Top');
+
+        // Wait for 2 seconds before proceeding
+        await page.waitForTimeout(2000);
+
+        // 7. Verify 'SEARCHED PRODUCTS' is visible
+        logger.info('Step 7: Verifying SEARCHED PRODUCTS visibility');
+        await productsPage.verifySearchedProducts();
+
+        // Wait for 1 second before proceeding
+        await page.waitForTimeout(1000);
+
+        // 8. Verify all the products related to search are visible
+        logger.info('Step 8: Verifying searched products list');
+        await productsPage.verifySearchedProductsList();
+
+        logger.info('Test Case 9: Search Product - PASSED');
     } catch (error) {
-        console.error('Test failed:', error);
+        logger.error('Test Case 9: Search Product - FAILED');
+        logger.error(`Error details: ${error.message}`);
     } finally {
+        logger.info('Cleaning up: Closing browser');
         await browser.close();
     }
 })();
